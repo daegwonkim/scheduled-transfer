@@ -1,1 +1,1 @@
-rootProject.name = "delayed-transfer"
+rootProject.name = "scheduled-transfer"
