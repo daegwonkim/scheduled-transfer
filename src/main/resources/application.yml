@@ -20,5 +20,5 @@ spring:
 core-banking-server:
   url: ""
 
-schedule:
+scheduling:
   cron: 0 * * * * *

@@ -10,5 +10,5 @@ import java.util.List;
 
 @Repository
 public interface ScheduledTransferJpaRepository extends JpaRepository<ScheduledTransfer, Long> {
-    List<ScheduledTransfer> findByScheduledAtBeforeAndStatus(LocalDateTime currentTime, TransferStatus status);
+    List<ScheduledTransfer> findByScheduledAtBeforeAndStatus(LocalDateTime now, TransferStatus status);
 }

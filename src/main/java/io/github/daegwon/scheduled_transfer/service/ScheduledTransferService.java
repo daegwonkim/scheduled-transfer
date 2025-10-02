@@ -9,14 +9,20 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+
 @Service
 @RequiredArgsConstructor
 public class ScheduledTransferService {
 
     private final ScheduledTransferRepository scheduledTransferRepository;
 
-    public List<ScheduledTransfer> getOverdueScheduledTransfers() {
-        LocalDateTime currentDateTime = LocalDateTime.now();
-        return scheduledTransferRepository.findByScheduledAtBeforeAndStatus(currentDateTime, TransferStatus.PENDING);
+    public ScheduledTransfer getScheduledTransfer(Long id) {
+        return scheduledTransferRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 이체 건: " + id));
+    }
+
+    public List<ScheduledTransfer> getOverduePendingTransfer() {
+        LocalDateTime now = LocalDateTime.now();
+        return scheduledTransferRepository.findByScheduledAtBeforeAndStatus(now, TransferStatus.PENDING);
     }
 }
