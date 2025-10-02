@@ -19,5 +19,8 @@ spring:
       properties:
         spring.json.trusted.packages: "io.github.daegwon.scheduled_transfer.domain.scheduled_transfer"
 
+core-banking-server:
+  url: ""
+
 schedule:
   cron: 0 * * * * *
