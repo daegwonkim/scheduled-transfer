@@ -22,6 +22,6 @@ public class CoreBankingService {
      * @return 요청 결과
      */
     public boolean executeTransfer(String fromAccount, String toAccount, BigDecimal amount) {
-        return false;
+        return true;
     }
 }

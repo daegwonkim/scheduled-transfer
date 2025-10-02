@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
@@ -25,6 +26,7 @@ public class TransferConsumer {
      * @param transferMessage 예약이체를 위한 정보가 담긴 DTO
      */
     @KafkaListener(topics = "scheduled-transfer", groupId = "${spring.kafka.consumer.group-id}")
+    @Transactional
     public void consumeTransferMessage(@Payload TransferMessage transferMessage) {
         log.info("메시지 수신 - Transfer ID: {}", transferMessage.transferId());
 
@@ -32,7 +34,7 @@ public class TransferConsumer {
 
         try {
             // 이미 처리된 이체 건인지 확인
-            if (transfer.getStatus() != TransferStatus.PENDING) {
+            if (transfer.getStatus() != TransferStatus.PROCESSING) {
                 log.error("이미 처리된 이체 건 - Transfer ID: {}", transfer.getId());
                 return;
             }
@@ -45,18 +47,18 @@ public class TransferConsumer {
             );
 
             if (success) {
-                // 성공: PENDING -> COMPLETED
+                // 성공: PROCESSING -> COMPLETED
                 transfer.setStatus(TransferStatus.COMPLETED);
                 log.info("이체 성공 - Transfer ID: {}", transfer.getId());
             } else {
-                // 실패: PENDING -> FAILED
+                // 실패: PROCESSING -> FAILED
                 transfer.setStatus(TransferStatus.FAILED);
                 log.error("이체 실패 - Transfer ID: {}", transfer.getId());
             }
         } catch (Exception e) {
             log.error("이체 처리 중 예외 발생 - Transfer ID: {}, Error: {}", transfer.getId(), e.getMessage(), e);
 
-            // 예외 발생: PENDING -> FAILED
+            // 예외 발생: PROCESSING -> FAILED
             transfer.setStatus(TransferStatus.FAILED);
         }
     }
