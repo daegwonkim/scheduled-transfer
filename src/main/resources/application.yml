@@ -19,5 +19,5 @@ spring:
       properties:
         spring.json.trusted.packages: "io.github.daegwon.scheduled_transfer.domain.scheduled_transfer"
 
-schedule:
+scheduling:
   cron: 0 * * * * *

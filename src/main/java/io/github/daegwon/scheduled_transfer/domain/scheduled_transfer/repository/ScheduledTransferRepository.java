@@ -5,7 +5,9 @@ import io.github.daegwon.scheduled_transfer.domain.scheduled_transfer.TransferSt
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface ScheduledTransferRepository {
-    List<ScheduledTransfer> findByScheduledAtBeforeAndStatus(LocalDateTime currentTime, TransferStatus status);
+    Optional<ScheduledTransfer> findById(Long id);
+    List<ScheduledTransfer> findByScheduledAtBeforeAndStatus(LocalDateTime now, TransferStatus status);
 }
