@@ -3,6 +3,7 @@ package io.github.daegwon.scheduled_transfer.domain.scheduled_transfer;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
@@ -27,6 +28,7 @@ public class ScheduledTransfer {
     @Column(precision = 15, scale = 2, nullable = false)
     private BigDecimal amount;
 
+    @Setter
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TransferStatus status;
@@ -41,11 +43,4 @@ public class ScheduledTransfer {
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-
-    public enum TransferStatus {
-        PENDING,
-        PROCESS,
-        COMPLETED,
-        FAILED
-    }
 }
