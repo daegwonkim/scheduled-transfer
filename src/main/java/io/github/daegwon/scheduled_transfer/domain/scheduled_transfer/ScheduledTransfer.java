@@ -3,8 +3,6 @@ package io.github.daegwon.scheduled_transfer.domain.scheduled_transfer;
 
 import jakarta.persistence.*;
 import lombok.Getter;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -45,11 +43,4 @@ public class ScheduledTransfer {
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-
-    public enum TransferStatus {
-        PENDING,
-        PROCESS,
-        COMPLETED,
-        FAILED
-    }
 }
