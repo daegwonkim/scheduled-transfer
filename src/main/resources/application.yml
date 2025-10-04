@@ -20,7 +20,7 @@ spring:
         spring.json.trusted.packages: "io.github.daegwon.scheduled_transfer.domain.scheduled_transfer"
 
 core-banking-server:
-  url: ""
+  url: "https://core-banking.free.beeceptor.com"
 
 schedule:
   cron: 0 * * * * *
