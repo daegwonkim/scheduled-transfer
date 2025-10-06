@@ -8,6 +8,9 @@ import io.github.daegwon.scheduled_transfer.service.ScheduledTransferService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,15 +30,22 @@ public class TransferConsumer {
      */
     @KafkaListener(topics = "scheduled-transfer", groupId = "${spring.kafka.consumer.group-id}")
     @Transactional
-    public void consumeTransferMessage(@Payload TransferMessage transferMessage) {
-        log.info("메시지 수신 - Transfer ID: {}", transferMessage.transferId());
+    public void consumeTransferMessage(
+            @Payload TransferMessage transferMessage,
+            @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
+            @Header(KafkaHeaders.OFFSET) int offset,
+            Acknowledgment ack
+    ) {
+        log.info("메시지 수신 - Transfer ID: {}, Partition: {}, Offset: {}",
+                transferMessage.transferId(), partition, offset);
 
         ScheduledTransfer transfer = scheduledTransferService.getScheduledTransfer(transferMessage.transferId());
 
         try {
             // 이미 처리된 이체 건인지 확인
             if (transfer.getStatus() != TransferStatus.PROCESSING) {
-                log.error("이미 처리된 이체 건 - Transfer ID: {}", transfer.getId());
+                log.warn("이미 처리된 이체 건 - Transfer ID: {}", transfer.getId());
+                ack.acknowledge();
                 return;
             }
 
@@ -61,5 +71,8 @@ public class TransferConsumer {
             // 예외 발생: PROCESSING -> FAILED
             transfer.setStatus(TransferStatus.FAILED);
         }
+
+        // Kafka offset 커밋
+        ack.acknowledge();
     }
 }
