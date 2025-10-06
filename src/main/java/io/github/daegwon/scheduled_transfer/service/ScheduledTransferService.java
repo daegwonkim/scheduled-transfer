@@ -5,6 +5,7 @@ import io.github.daegwon.scheduled_transfer.domain.scheduled_transfer.TransferSt
 import io.github.daegwon.scheduled_transfer.domain.scheduled_transfer.repository.ScheduledTransferRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,5 +25,10 @@ public class ScheduledTransferService {
     public List<ScheduledTransfer> getOverduePendingTransfer() {
         LocalDateTime now = LocalDateTime.now();
         return scheduledTransferRepository.findByScheduledAtBeforeAndStatus(now, TransferStatus.PENDING);
+    }
+
+    @Transactional
+    public ScheduledTransfer save(ScheduledTransfer scheduledTransfer) {
+        return scheduledTransferRepository.save(scheduledTransfer);
     }
 }
