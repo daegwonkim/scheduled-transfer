@@ -26,7 +26,7 @@ spring:
       ack-mode: manual_immediate
 
 core-banking-server:
-  url: "https://core-banking.free.beeceptor.com"
+  url: "http://localhost:3000"
 
 scheduling:
   cron: 0 * * * * *
