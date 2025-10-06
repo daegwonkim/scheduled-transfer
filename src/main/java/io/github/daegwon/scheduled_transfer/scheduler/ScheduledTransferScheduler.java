@@ -1,11 +1,12 @@
 package io.github.daegwon.scheduled_transfer.scheduler;
 
 import io.github.daegwon.scheduled_transfer.domain.scheduled_transfer.ScheduledTransfer;
+import io.github.daegwon.scheduled_transfer.domain.scheduled_transfer.ScheduledTransferEvent;
 import io.github.daegwon.scheduled_transfer.domain.scheduled_transfer.TransferStatus;
-import io.github.daegwon.scheduled_transfer.kafka.TransferProducer;
 import io.github.daegwon.scheduled_transfer.service.ScheduledTransferService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +19,7 @@ import java.util.List;
 public class ScheduledTransferScheduler {
 
     private final ScheduledTransferService scheduledTransferService;
-    private final TransferProducer transferProducer;
+    private final ApplicationEventPublisher publisher;
 
     /**
      * 5분마다 송금가능일시가 도래한 예약이체 건들을 조회하여 Kafka로 발행
@@ -40,9 +41,10 @@ public class ScheduledTransferScheduler {
             try {
                 // 상태 변경: PENDING -> PROCESSING
                 transfer.setStatus(TransferStatus.PROCESSING);
+                scheduledTransferService.save(transfer);
 
                 // Kafka로 발행
-                transferProducer.sendTransferMessage(transfer);
+                publisher.publishEvent(new ScheduledTransferEvent(transfer));
 
                 successCount++;
                 log.info("Kafka 발행 성공 - Transfer ID: {}", transfer.getId());
@@ -52,6 +54,8 @@ public class ScheduledTransferScheduler {
 
                 // 예외 발생시 상태 복구: PROCESSING -> PENDING
                 transfer.setStatus(TransferStatus.PENDING);
+                scheduledTransferService.save(transfer);
+
                 failCount++;
             }
         }

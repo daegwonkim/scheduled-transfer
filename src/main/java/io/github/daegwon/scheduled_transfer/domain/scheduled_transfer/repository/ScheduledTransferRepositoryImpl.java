@@ -25,4 +25,9 @@ public class ScheduledTransferRepositoryImpl implements ScheduledTransferReposit
     public List<ScheduledTransfer> findByScheduledAtBeforeAndStatus(LocalDateTime now, TransferStatus status) {
         return scheduledTransferJpaRepository.findByScheduledAtBeforeAndStatus(now, status);
     }
+
+    @Override
+    public ScheduledTransfer save(ScheduledTransfer scheduledTransfer) {
+        return scheduledTransferJpaRepository.save(scheduledTransfer);
+    }
 }

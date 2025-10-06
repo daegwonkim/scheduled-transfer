@@ -59,10 +59,14 @@ public class TransferConsumer {
             if (success) {
                 // 성공: PROCESSING -> COMPLETED
                 transfer.setStatus(TransferStatus.COMPLETED);
+                scheduledTransferService.save(transfer);
+
                 log.info("이체 성공 - Transfer ID: {}", transfer.getId());
             } else {
                 // 실패: PROCESSING -> FAILED
                 transfer.setStatus(TransferStatus.FAILED);
+                scheduledTransferService.save(transfer);
+
                 log.error("이체 실패 - Transfer ID: {}", transfer.getId());
             }
         } catch (Exception e) {
@@ -70,6 +74,7 @@ public class TransferConsumer {
 
             // 예외 발생: PROCESSING -> FAILED
             transfer.setStatus(TransferStatus.FAILED);
+            scheduledTransferService.save(transfer);
         }
 
         // Kafka offset 커밋
