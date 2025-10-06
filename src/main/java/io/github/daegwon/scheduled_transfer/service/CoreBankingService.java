@@ -30,27 +30,14 @@ public class CoreBankingService {
         try {
             log.info("코어뱅킹 서버 이체 요청 - From: {}, To: {}, Amount: {}", fromAccount, toAccount, amount);
 
-            TransferRequest requestBody = TransferRequest.builder()
-                    .fromAccount(fromAccount)
-                    .toAccount(toAccount)
-                    .amount(amount)
-                    .build();
-
             RestClient restClient = RestClient.create();
-            ResponseEntity<Void> response = restClient.post()
-                    .uri(CORE_BANKING_SERVER_URL + "/api/v1/transfer")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(requestBody)
+            ResponseEntity<Void> response = restClient.get()
+                    .uri(CORE_BANKING_SERVER_URL + "/transfer")
                     .retrieve()
                     .toBodilessEntity();
 
-            if (response.getStatusCode() == HttpStatus.OK) {
-                log.info("코어뱅킹 서버 이체 성공 - From: {}, To: {}", fromAccount, toAccount);
-                return true;
-            } else {
-                log.error("코어뱅킹 서버 이체 실패 - Status: {}", response.getStatusCode());
-                return false;
-            }
+            log.info("코어뱅킹 서버 이체 성공 - From: {}, To: {}", fromAccount, toAccount);
+            return true;
         } catch (Exception e) {
             log.error("코어뱅킹 서버 호출 실패 - Error: {}", e.getMessage(), e);
             return false;

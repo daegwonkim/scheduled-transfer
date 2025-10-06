@@ -1,0 +1,7 @@
+{
+  "transfer": {
+    "status": "SUCCESS",
+    "transactionId": "txn_1234567890",
+    "message": "Transfer processed successfully"
+  }
+}
