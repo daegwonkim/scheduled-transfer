@@ -1,10 +1,7 @@
 package io.github.daegwon.scheduled_transfer.service;
 
-import io.github.daegwon.scheduled_transfer.dto.TransferRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;

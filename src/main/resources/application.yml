@@ -20,10 +20,12 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
+        max.poll.records: 20
         spring.json.trusted.packages: "io.github.daegwon.scheduled_transfer.dto"
     listener:
+      type: batch
       concurrency: 3
-      ack-mode: manual_immediate
+      ack-mode: batch
 
 core-banking-server:
   url: "http://localhost:3000"
