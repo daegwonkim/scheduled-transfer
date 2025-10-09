@@ -24,7 +24,10 @@
 - **Database**: MySQL 8.0
 - **Test**: json-server
 
-## 3. 프로젝트 구조
+## 3. 흐름도
+<img width="1221" height="359" alt="Image" src="https://github.com/user-attachments/assets/bfc925f3-c5b9-45cc-9881-b8be18471599" />
+
+## 4. 프로젝트 구조
 ```
 scheduled_transfer/
 ├── domain/ # 도메인 관리
