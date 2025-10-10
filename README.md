@@ -24,7 +24,7 @@
 - **Test**: json-server
 
 ## 3. 흐름도
-<img width="1121" height="359" alt="scheduled_transfer drawio" src="https://github.com/user-attachments/assets/e9173643-8616-4465-be43-1abc25e483d2" />
+<img width="1121" height="359" alt="scheduled_transfer drawio (1)" src="https://github.com/user-attachments/assets/4eb654f7-396b-42d6-97bf-7d8231672b9f" />
 
 ## 4. 프로젝트 구조
 ```
