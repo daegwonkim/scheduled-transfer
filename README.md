@@ -24,7 +24,7 @@
 - **Test**: json-server
 
 ## 3. 흐름도
-<img width="1221" height="359" alt="Image" src="https://github.com/user-attachments/assets/bfc925f3-c5b9-45cc-9881-b8be18471599" />
+<img width="851" height="359" alt="Image" src="https://github.com/user-attachments/assets/f0f5f8a6-e2c2-4da7-bd5d-2c8c558a3e75" />
 
 ## 4. 프로젝트 구조
 ```
