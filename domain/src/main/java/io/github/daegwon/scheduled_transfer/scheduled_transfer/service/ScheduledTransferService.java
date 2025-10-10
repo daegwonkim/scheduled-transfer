@@ -5,6 +5,7 @@ import io.github.daegwon.scheduled_transfer.scheduled_transfer.TransferStatus;
 import io.github.daegwon.scheduled_transfer.scheduled_transfer.repository.ScheduledTransferRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -27,8 +28,13 @@ public class ScheduledTransferService {
         return scheduledTransferRepository.findByScheduledAtBeforeAndStatus(now, TransferStatus.PENDING);
     }
 
-    @Transactional
-    public ScheduledTransfer save(ScheduledTransfer scheduledTransfer) {
-        return scheduledTransferRepository.save(scheduledTransfer);
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void save(ScheduledTransfer scheduledTransfer) {
+        scheduledTransferRepository.save(scheduledTransfer);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void updateStatusToProcessing(List<Long> ids) {
+        scheduledTransferRepository.updateStatusByIds(ids, TransferStatus.PROCESSING);
     }
 }

@@ -10,5 +10,6 @@ import java.util.Optional;
 public interface ScheduledTransferRepository {
     Optional<ScheduledTransfer> findById(Long id);
     List<ScheduledTransfer> findByScheduledAtBeforeAndStatus(LocalDateTime now, TransferStatus status);
-    ScheduledTransfer save(ScheduledTransfer scheduledTransfer);
+    void save(ScheduledTransfer scheduledTransfer);
+    void updateStatusByIds(List<Long> ids, TransferStatus status);
 }
