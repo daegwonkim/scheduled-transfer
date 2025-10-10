@@ -23,28 +23,19 @@ public class TransferConsumer {
     private final CoreBankingService coreBankingService;
     private final ScheduledTransferService scheduledTransferService;
 
-    /**
-     * Kafka에서 예약이체 메시지를 배치로 consume하여 코어뱅킹 서버로 전송
-     *
-     * @param records 예약이체 메시지 배치
-     */
     @KafkaListener(topics = "scheduled-transfer", groupId = "${spring.kafka.consumer.group-id}")
     public void consumeTransferMessages(List<ConsumerRecord<String, TransferMessage>> records) {
         log.info("배치 메시지 수신 - 총 {}건", records.size());
 
-        List<Long> successIds = new ArrayList<>();
+        // 결과를 상태별로 분류
+        List<Long> completedIds = new ArrayList<>();
         List<Long> failedIds = new ArrayList<>();
 
         for (ConsumerRecord<String, TransferMessage> record : records) {
             TransferMessage transferMessage = record.value();
-            int partition = record.partition();
-            long offset = record.offset();
-
-            log.debug("메시지 처리 중 - Transfer ID: {}, Partition: {}, Offset: {}",
-                    transferMessage.transferId(), partition, offset);
 
             try {
-                processTransfer(transferMessage, successIds, failedIds);
+                processTransfer(transferMessage, completedIds, failedIds);
             } catch (Exception e) {
                 log.error("메시지 처리 중 예외 발생 - Transfer ID: {}, Error: {}",
                         transferMessage.transferId(), e.getMessage(), e);
@@ -52,31 +43,37 @@ public class TransferConsumer {
             }
         }
 
-        // 배치 결과 로깅 및 ACK
-        log.info("배치 처리 완료 - 성공: {}건, 실패: {}건", successIds.size(), failedIds.size());
+        if (!completedIds.isEmpty()) {
+            scheduledTransferService.updateStatusByIds(completedIds, TransferStatus.COMPLETED);
+        }
+        if (!failedIds.isEmpty()) {
+            scheduledTransferService.updateStatusByIds(failedIds, TransferStatus.FAILED);
+        }
+
+        log.info("배치 처리 완료 - 성공: {}건, 실패: {}건", completedIds.size(), failedIds.size());
     }
 
     /**
      * 개별 이체 처리 로직
      */
-    @Transactional
     private void processTransfer(
             TransferMessage transferMessage,
-            List<Long> successIds,
+            List<Long> completedIds,
             List<Long> failedIds
     ) {
-        ScheduledTransfer transfer = scheduledTransferService.getScheduledTransfer(
-                transferMessage.transferId()
-        );
+        Long transferId = transferMessage.transferId();
+
+        // 이체 건 조회 (상태 확인용)
+        ScheduledTransfer transfer = scheduledTransferService.getScheduledTransfer(transferId);
 
         // 이미 처리된 이체 건인지 확인
         if (transfer.getStatus() != TransferStatus.PROCESSING) {
-            log.warn("이미 처리된 이체 건 - Transfer ID: {}", transfer.getId());
+            log.warn("이미 처리된 이체 건 - Transfer ID: {}", transferId);
             return;
         }
 
         try {
-            // 코어뱅킹 서버로 이체 요청 및 결과 반환
+            // 코어뱅킹 서버로 이체 요청
             boolean success = coreBankingService.executeTransfer(
                     transferMessage.fromAccount(),
                     transferMessage.toAccount(),
@@ -84,28 +81,16 @@ public class TransferConsumer {
             );
 
             if (success) {
-                // 성공: PROCESSING -> COMPLETED
-                transfer.setStatus(TransferStatus.COMPLETED);
-                scheduledTransferService.save(transfer);
-                successIds.add(transfer.getId());
-
-                log.info("이체 성공 - Transfer ID: {}", transfer.getId());
+                completedIds.add(transferId);
+                log.info("이체 성공 - Transfer ID: {}", transferId);
             } else {
-                // 실패: PROCESSING -> FAILED
-                transfer.setStatus(TransferStatus.FAILED);
-                scheduledTransferService.save(transfer);
-                failedIds.add(transfer.getId());
-
-                log.error("이체 실패 - Transfer ID: {}", transfer.getId());
+                failedIds.add(transferId);
+                log.error("이체 실패 - Transfer ID: {}", transferId);
             }
         } catch (Exception e) {
             log.error("이체 처리 중 예외 발생 - Transfer ID: {}, Error: {}",
-                    transfer.getId(), e.getMessage(), e);
-
-            // 예외 발생: PROCESSING -> FAILED
-            transfer.setStatus(TransferStatus.FAILED);
-            scheduledTransferService.save(transfer);
-            failedIds.add(transfer.getId());
+                    transferId, e.getMessage(), e);
+            failedIds.add(transferId);
         }
     }
 }

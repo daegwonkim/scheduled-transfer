@@ -37,7 +37,7 @@ public class ScheduledTransferScheduler {
                 .map(ScheduledTransfer::getId)
                 .toList();
 
-        scheduledTransferService.updateStatusToProcessing(transferIds);
+        scheduledTransferService.updateStatusByIds(transferIds, TransferStatus.PROCESSING);
 
         int successCount = 0;
         int failCount = 0;
