@@ -1,12 +1,11 @@
 package io.github.daegwon.scheduled_transfer.scheduler;
 
-import io.github.daegwon.scheduled_transfer.scheduled_transfer.dto.ScheduledTransferEvent;
+import io.github.daegwon.scheduled_transfer.kafka.TransferProducer;
 import io.github.daegwon.scheduled_transfer.scheduled_transfer.entity.ScheduledTransfer;
 import io.github.daegwon.scheduled_transfer.scheduled_transfer.TransferStatus;
 import io.github.daegwon.scheduled_transfer.scheduled_transfer.service.ScheduledTransferService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +18,7 @@ import java.util.List;
 public class ScheduledTransferScheduler {
 
     private final ScheduledTransferService scheduledTransferService;
-    private final ApplicationEventPublisher publisher;
+    private final TransferProducer producer;
 
     /**
      * 5분마다 송금가능일시가 도래한 예약이체 건들을 조회하여 Kafka로 발행
@@ -34,29 +33,31 @@ public class ScheduledTransferScheduler {
 
         log.info("처리 대상 예약이체 건수: {}", transfers.size());
 
+        List<Long> transferIds = transfers.stream()
+                .map(ScheduledTransfer::getId)
+                .toList();
+
+        scheduledTransferService.updateStatusToProcessing(transferIds);
+
         int successCount = 0;
         int failCount = 0;
 
         for (ScheduledTransfer transfer : transfers) {
             try {
-                // 상태 변경: PENDING -> PROCESSING
-                transfer.setStatus(TransferStatus.PROCESSING);
-                scheduledTransferService.save(transfer);
-
                 // Kafka로 발행
-                publisher.publishEvent(new ScheduledTransferEvent(transfer));
-
+                producer.sendTransferMessage(transfer);
                 successCount++;
+
                 log.info("Kafka 발행 성공 - Transfer ID: {}", transfer.getId());
             } catch (Exception e) {
-                log.error("Kafka 발행 실패 - Transfer ID: {}, Error: {}",
-                        transfer.getId(), e.getMessage(), e);
-
                 // 예외 발생시 상태 복구: PROCESSING -> PENDING
                 transfer.setStatus(TransferStatus.PENDING);
                 scheduledTransferService.save(transfer);
 
                 failCount++;
+
+                log.error("Kafka 발행 실패 - Transfer ID: {}, Error: {}",
+                        transfer.getId(), e.getMessage(), e);
             }
         }
 

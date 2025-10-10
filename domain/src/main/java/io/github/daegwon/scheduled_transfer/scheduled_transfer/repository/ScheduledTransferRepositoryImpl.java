@@ -27,7 +27,12 @@ public class ScheduledTransferRepositoryImpl implements ScheduledTransferReposit
     }
 
     @Override
-    public ScheduledTransfer save(ScheduledTransfer scheduledTransfer) {
-        return scheduledTransferJpaRepository.save(scheduledTransfer);
+    public void save(ScheduledTransfer scheduledTransfer) {
+        scheduledTransferJpaRepository.save(scheduledTransfer);
+    }
+
+    @Override
+    public void updateStatusByIds(List<Long> ids, TransferStatus status) {
+        scheduledTransferJpaRepository.updateStatusByIds(ids, status);
     }
 }
