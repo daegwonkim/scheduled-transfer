@@ -23,11 +23,10 @@ public class TransferConsumer {
     private final CoreBankingService coreBankingService;
     private final ScheduledTransferService scheduledTransferService;
 
-    @KafkaListener(topics = "scheduled-transfer", groupId = "${spring.kafka.consumer.group-id}")
+    @KafkaListener(topics = "scheduled-transfer", groupId = "transfer-consumer-group")
     public void consumeTransferMessages(List<ConsumerRecord<String, TransferMessage>> records) {
         log.info("배치 메시지 수신 - 총 {}건", records.size());
 
-        // 결과를 상태별로 분류
         List<Long> completedIds = new ArrayList<>();
         List<Long> failedIds = new ArrayList<>();
 
@@ -37,17 +36,22 @@ public class TransferConsumer {
             try {
                 processTransfer(transferMessage, completedIds, failedIds);
             } catch (Exception e) {
-                log.error("메시지 처리 중 예외 발생 - Transfer ID: {}, Error: {}",
-                        transferMessage.transferId(), e.getMessage(), e);
-                failedIds.add(transferMessage.transferId());
+                log.error("메시지 처리 중 예외 발생 - Transfer ID: {}",
+                        transferMessage.transferId(), e);
+                throw e; // DLQ ErrorHandler가 처리하도록 예외 던지기
             }
         }
 
-        if (!completedIds.isEmpty()) {
-            scheduledTransferService.updateStatusByIds(completedIds, TransferStatus.COMPLETED);
-        }
-        if (!failedIds.isEmpty()) {
-            scheduledTransferService.updateStatusByIds(failedIds, TransferStatus.FAILED);
+        try {
+            if (!completedIds.isEmpty()) {
+                scheduledTransferService.updateStatusByIds(completedIds, TransferStatus.COMPLETED);
+            }
+            if (!failedIds.isEmpty()) {
+                scheduledTransferService.updateStatusByIds(failedIds, TransferStatus.FAILED);
+            }
+        } catch (Exception e) {
+            log.error("DB 업데이트 실패 - ", e);
+            throw e;
         }
 
         log.info("배치 처리 완료 - 성공: {}건, 실패: {}건", completedIds.size(), failedIds.size());
@@ -90,7 +94,7 @@ public class TransferConsumer {
         } catch (Exception e) {
             log.error("이체 처리 중 예외 발생 - Transfer ID: {}, Error: {}",
                     transferId, e.getMessage(), e);
-            failedIds.add(transferId);
+            throw e;
         }
     }
 }

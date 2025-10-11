@@ -33,11 +33,16 @@ public class CoreBankingService {
                     .retrieve()
                     .toBodilessEntity();
 
-            log.info("코어뱅킹 서버 이체 성공 - From: {}, To: {}", fromAccount, toAccount);
-            return true;
+            if (response.getStatusCode().is2xxSuccessful()) {
+                log.info("코어뱅킹 서버 이체 성공 - From: {}, To: {}", fromAccount, toAccount);
+                return true;
+            } else {
+                log.error("코어뱅킹 서버 이체 실패 - From: {}, To: {}", fromAccount, toAccount);
+                return false;
+            }
         } catch (Exception e) {
             log.error("코어뱅킹 서버 호출 실패 - Error: {}", e.getMessage(), e);
-            return false;
+            throw e;
         }
     }
 }
