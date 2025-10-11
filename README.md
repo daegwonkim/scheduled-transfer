@@ -66,3 +66,56 @@ scheduled_transfer/
 ├── build.gradle.kts
 └── settings.gradle.kts
 ```
+
+## 5. 특이사항
+
+### Key-based Partitioning
+일반적인 경우 분산 락을 함께 사용하여 동시성 제어를 하는데, 이 경우 같은 출금계좌에 대한 서로 다른 이체 요청이 각각 다른 파티션에서 처리되면 락 경합이 발생하게 되어 성능이 떨어질 수 있습니다.
+때문에 계좌번호를 키로 사용하는 키-기반 파티셔닝 전략을 사용하여 같은 출금계좌에 대한 서로 다른 이체 요청이 같은 파티션에서 처리될 수 있도록 함으로써 불필요한 락 경합을 줄이고 동시성 문제를 해결할 수 있습니다.
+
+```java
+kafkaTemplate.send("scheduled-transfer", transferMessage.fromAccount(), transferMessage);
+```
+
+파티셔닝 만으로도 대부분의 동시성 문제를 해결할 수 있습니다. 단, 시스템 전체의 데이터 정합성을 보장하기 위해서는 락을 병행해서 사용하는 것이 좋겠습니다.
+
+### Batch Read
+기본적으로 Consumer들은 각자가 담당하는 파티션에 발행된 메시지들을 하나씩 가져와서 처리합니다. 이러한 상황에서 처리량을 높이고 싶은 경우 일괄 처리를 도입해볼 수 있습니다. Kafka Consumer는 Batch Read를 설정하여 파티션에 발행된 메시지들을 일괄로 가져와서 처리할 수 있습니다.
+
+```java
+@Bean
+public ConsumerFactory<String, TransferMessage> consumerFactory() {
+    Map<String, Object> config = new HashMap<>();
+
+    ...
+
+    config.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 20);
+
+    ...
+}
+```
+
+```java
+@Bean
+public ConcurrentKafkaListenerContainerFactory<String, TransferMessage> kafkaListenerContainerFactory(
+        CommonErrorHandler errorHandler) {
+    ConcurrentKafkaListenerContainerFactory<String, TransferMessage> factory =
+            new ConcurrentKafkaListenerContainerFactory<>();
+
+    factory.setConsumerFactory(consumerFactory());
+
+    // Batch 모드 설정
+    factory.setBatchListener(true);
+
+    // 동시 실행 스레드 개수
+    factory.setConcurrency(3);
+
+    // ACK 모드 설정 (배치 단위로 커밋)
+    factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.BATCH);
+
+    ...
+}
+```
+
+이렇게 하면, Consumer는 메시지를 하나씩 가져오는 대신 설정된 개수(`max.poll.records`)만큼 한 번에 가져와서 일괄 처리함으로써, 처리량 향상 및 네트워크 I/O 오버헤드를 감소시킬 수 있습니다.  
+단, 개별 처리 방식에 비해 지연시간이 길어질 수 있으므로, 실시간성 보다는 처리량이 중요한 경우에 사용하는 것이 적합합니다.
