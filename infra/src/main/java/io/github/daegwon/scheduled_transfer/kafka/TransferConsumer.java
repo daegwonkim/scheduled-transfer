@@ -23,7 +23,7 @@ public class TransferConsumer {
     private final CoreBankingService coreBankingService;
     private final ScheduledTransferService scheduledTransferService;
 
-    @KafkaListener(topics = "scheduled-transfer", groupId = "${spring.kafka.consumer.group-id}")
+    @KafkaListener(topics = "scheduled-transfer", groupId = "transfer-consumer-group")
     public void consumeTransferMessages(List<ConsumerRecord<String, TransferMessage>> records) {
         log.info("배치 메시지 수신 - 총 {}건", records.size());
 
