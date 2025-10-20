@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +22,14 @@ public class TransferConsumer {
     private final CoreBankingService coreBankingService;
     private final ScheduledTransferService scheduledTransferService;
 
-    @KafkaListener(topics = "scheduled-transfer", groupId = "transfer-consumer-group")
+    @KafkaListener(
+            topics = "scheduled-transfer",
+            containerFactory = "batchKafkaListenerContainerFactory",
+            groupId = "transfer-consumer-group",
+            properties = {
+                    "max.poll.records=20",
+            }
+    )
     public void consumeTransferMessages(List<ConsumerRecord<String, TransferMessage>> records) {
         log.info("배치 메시지 수신 - 총 {}건", records.size());
 
@@ -55,6 +61,27 @@ public class TransferConsumer {
         }
 
         log.info("배치 처리 완료 - 성공: {}건, 실패: {}건", completedIds.size(), failedIds.size());
+    }
+
+    @KafkaListener(
+            topics = "scheduled-transfer.DLQ",
+            containerFactory = "kafkaListenerContainerFactory"
+    )
+    public void consumeErrorMessages(ConsumerRecord<String, TransferMessage> record) {
+        TransferMessage message = record.value();
+
+        try {
+            scheduledTransferService.updateStatusById(message.transferId(), TransferStatus.FAILED);
+
+            log.error("DLQ 메시지 수신 - ID: {}, From: {}, To: {}, Amount: {}",
+                    message.transferId(),
+                    message.fromAccount(),
+                    message.toAccount(),
+                    message.amount()
+            );
+        } catch (Exception e) {
+            log.error("DLQ 메시지 처리 중 예외 발생: {}", message.transferId(), e);
+        }
     }
 
     /**

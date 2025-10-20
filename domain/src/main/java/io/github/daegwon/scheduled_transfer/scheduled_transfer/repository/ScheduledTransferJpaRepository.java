@@ -16,6 +16,10 @@ public interface ScheduledTransferJpaRepository extends JpaRepository<ScheduledT
     List<ScheduledTransfer> findByScheduledAtBeforeAndStatus(LocalDateTime now, TransferStatus status);
 
     @Modifying
+    @Query("UPDATE ScheduledTransfer st SET st.status = :status WHERE st.id = :id")
+    void updateStatusById(@Param("id") Long id, @Param("status") TransferStatus status);
+
+    @Modifying
     @Query("UPDATE ScheduledTransfer st SET st.status = :status WHERE st.id IN :ids")
     void updateStatusByIds(@Param("ids") List<Long> ids, @Param("status") TransferStatus status);
 }

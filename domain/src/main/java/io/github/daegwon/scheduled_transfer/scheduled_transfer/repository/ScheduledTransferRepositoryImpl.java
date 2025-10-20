@@ -32,6 +32,11 @@ public class ScheduledTransferRepositoryImpl implements ScheduledTransferReposit
     }
 
     @Override
+    public void updateStatusById(Long id, TransferStatus status) {
+        scheduledTransferJpaRepository.updateStatusById(id, status);
+    }
+
+    @Override
     public void updateStatusByIds(List<Long> ids, TransferStatus status) {
         scheduledTransferJpaRepository.updateStatusByIds(ids, status);
     }

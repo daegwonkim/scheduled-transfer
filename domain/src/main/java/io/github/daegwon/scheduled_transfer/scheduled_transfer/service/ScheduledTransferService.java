@@ -34,6 +34,11 @@ public class ScheduledTransferService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void updateStatusById(Long id, TransferStatus status) {
+        scheduledTransferRepository.updateStatusById(id, status);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateStatusByIds(List<Long> ids, TransferStatus status) {
         scheduledTransferRepository.updateStatusByIds(ids, status);
     }

@@ -56,7 +56,6 @@ public class KafkaConfig {
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
-        config.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 20);
 
         // JsonDeserializer 신뢰 패키지 설정
         config.put(JsonDeserializer.TRUSTED_PACKAGES, "io.github.daegwon.scheduled_transfer.scheduled_transfer.dto");
@@ -95,7 +94,18 @@ public class KafkaConfig {
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, TransferMessage> kafkaListenerContainerFactory(
+    public ConcurrentKafkaListenerContainerFactory<String, TransferMessage> kafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, TransferMessage> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+
+        factory.setConsumerFactory(consumerFactory());
+        factory.setConcurrency(3);
+
+        return factory;
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, TransferMessage> batchKafkaListenerContainerFactory(
             CommonErrorHandler errorHandler) {
         ConcurrentKafkaListenerContainerFactory<String, TransferMessage> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();

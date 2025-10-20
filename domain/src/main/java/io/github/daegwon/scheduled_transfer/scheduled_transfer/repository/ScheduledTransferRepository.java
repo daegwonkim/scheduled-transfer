@@ -11,5 +11,6 @@ public interface ScheduledTransferRepository {
     Optional<ScheduledTransfer> findById(Long id);
     List<ScheduledTransfer> findByScheduledAtBeforeAndStatus(LocalDateTime now, TransferStatus status);
     void save(ScheduledTransfer scheduledTransfer);
+    void updateStatusById(Long id, TransferStatus status);
     void updateStatusByIds(List<Long> ids, TransferStatus status);
 }
