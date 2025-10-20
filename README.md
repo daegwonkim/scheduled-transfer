@@ -83,21 +83,19 @@ kafkaTemplate.send("scheduled-transfer", transferMessage.fromAccount(), transfer
 기본적으로 Consumer들은 각자가 담당하는 파티션에 발행된 메시지들을 하나씩 가져와서 처리합니다. 이러한 상황에서 처리량을 높이고 싶은 경우 일괄 처리를 도입해볼 수 있습니다. Kafka Consumer는 Batch Read를 설정하여 파티션에 발행된 메시지들을 일괄로 가져와서 처리할 수 있습니다.
 
 ```java
-@Bean
-public ConsumerFactory<String, TransferMessage> consumerFactory() {
-    Map<String, Object> config = new HashMap<>();
-
-    ...
-
-    config.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 20);
-
-    ...
-}
+@KafkaListener(
+        topics = "scheduled-transfer",
+        containerFactory = "batchKafkaListenerContainerFactory",
+        groupId = "transfer-consumer-group",
+        properties = {
+                "max.poll.records=20",
+        }
+)
 ```
 
 ```java
 @Bean
-public ConcurrentKafkaListenerContainerFactory<String, TransferMessage> kafkaListenerContainerFactory(
+public ConcurrentKafkaListenerContainerFactory<String, TransferMessage> batchKafkaListenerContainerFactory(
         CommonErrorHandler errorHandler) {
     ConcurrentKafkaListenerContainerFactory<String, TransferMessage> factory =
             new ConcurrentKafkaListenerContainerFactory<>();
